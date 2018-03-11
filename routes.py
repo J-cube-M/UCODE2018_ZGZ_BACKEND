@@ -1,6 +1,7 @@
 from flask.blueprints import Blueprint
 from flask import request
 import json
+import re
 
 from models import Map, Cell, Product, User
 
@@ -99,4 +100,21 @@ def updateSystem():
 	colaborativeSystem.updateSystem(productId=idProduct-1,userId=user.id-1,score=score)
 
 	return json.dumps(True)
+
+@route.route('/search')
+def search():
+	query = request.args.get('query', default="----")
+	if query == "":
+		return json.dumps({'error': 'No hay query'})
+
+	results = Product.query.all()
+
+	res = []
+
+	regex = re.compile(query)
+	for result in results:
+		if result.name.lower().find(query.lower()) != -1:
+			res.append(result.asDict())
+
+	return json.dumps(res)
 		
