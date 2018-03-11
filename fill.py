@@ -8,8 +8,11 @@ def addMapWithCells(db, mapData, zonesRadius, cellList):
 
 	for i in range(0, len(cellList)):
 		for j in range(0, len(cellList[0])):
+			if cellList[i][j] == 0:
+				continue
+
 			r = 0 if (cellList[i][j] == -1 or cellList[i][j] == 0) else zonesRadius[cellList[i][j]]
-			cell = Cell(map=mapData[0], value=cellList[i][j], radius=r, posX=i, posY=j)
+			cell = Cell(map=mapData[0], value=cellList[i][j], radius=r, posX=j, posY=i)
 			db.session.add(cell)
 			db.session.flush()
 
@@ -23,10 +26,11 @@ def addZones(db, zonesList):
 		z = Zone(name=zone[0])
 
 		map_ = Map.query.filter_by(id=zone[1]).first()
-		map_.zones.append(z)
+		if map_ != None:
+			map_.zones.append(z)
+			db.session.add(map_)
 
 		db.session.add(z)
-		db.session.add(map_)
 		db.session.flush()
 		res.append(z.id)
 
@@ -36,12 +40,10 @@ def addZones(db, zonesList):
 	return res
 
 def addProducts(db, zones_id, productsList):
-	index = 0
 	for product in productsList:
-		p = Product(name=product[0], description=product[1], zone=zones_id[index], image=product[2])
+		p = Product(name=product[0], description=product[1], zone=zones_id[product[3]], image=product[2])
 		db.session.add(p)
 		db.session.flush()
-		index = index + 1
 
 		print ('Added product {0}'.format(product[0]))
 
@@ -59,21 +61,37 @@ def addUsers(db, users):
 
 def fillDB(db):
 	print (' -- Filling maps --')
-	addMapWithCells(db, (0, 'Shop test 1', 6, 4), \
+	addMapWithCells(db, (0, 'Shop test 1', 6, 5), \
 					{2 : 2, 3 : 2}, \
-					[[-1, -1 , -1, -1], \
-					 [-1,  2,   0, -1], \
-					 [-1,  0,   0, -1], \
-					 [-1,  0,   0, -1], \
-					 [-1,  0,   3, -1], \
-					 [-1, -1,  -1, -1]])
+					[[-1, -1, -1, -1, -1, -1], \
+					 [-1,  2,  0,  0,  0, -1], \
+					 [-1,  0,  0,  0,  0, -1], \
+					 [-1,  0,  0,  0,  3, -1], \
+					 [-1, -1, -1, -1, -1, -1]])
+
+	addMapWithCells(db, (1, 'Shop test 2', 8, 8), \
+					{2 : 3, 3 : 2, 4 : 2}, \
+					[[-1, -1, -1, -1, -1, -1, -1, -1], \
+					 [-1,  4,  0,  0, -1,  0,  0, -1], \
+					 [-1,  0,  0,  0, -1,  2,  0, -1], \
+					 [-1,  0,  0,  0, -1,  0,  0, -1], \
+					 [-1,  0,  0,  3, -1,  0,  0, -1], \
+					 [-1,  0,  0,  0, -1,  0,  0, -1], \
+					 [-1,  0,  0,  0,  0,  0,  0, -1], \
+					 [-1,  0,  0, -1, -1, -1, -1, -1]])
 
 	print (' -- Filling zones --')
-	ids = addZones(db, [('Calzado', 0), ('Camisetas', 0)])
+	ids = addZones(db, [('Calzado', 1), ('Camisetas', 1), ('Pantalones', 1), ('Kimonos', 2), ('Equipamiento', 3)])
 
 	print (' -- Filling products --')
-	addProducts(db, ids, [('Zapatilla Predator', 'Muy top', 'http://google.com'), \
-					      ('Camiseta manga corta', 'Muy corta', 'http://google.es')])
+	#addProducts(db, ids, [('Zapatilla Predator', 'Muy top', 'http://google.com'), \
+	#				      ('Camiseta manga corta', 'Muy corta', 'http://google.es')])
+
+	addProducts(db, ids, [('Zapatillas futbol', 'Predator style', 'url', 0), \
+						  ('Camiste basket', 'Lebron james approved', 'url', 1), \
+						  ('Bañador masculino', 'Feel like a dolphin', 'url', 2), \
+						  ('Dobok', 'Hit harder', 'url', 3), \
+						  ('Balon de futbol', 'Balls', 'url', 4)])
 
 	print (' -- Filling users --')
 	addUsers(db, ['Mike', 'Turtle', 'Juanjo'])

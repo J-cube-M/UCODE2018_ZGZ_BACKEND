@@ -4,6 +4,8 @@ import json
 
 from models import Map, Cell, Product, User
 
+from colaborativeFiltering import colaborativeSystem
+
 route = Blueprint('route', __name__)
 
 @route.route('/')
@@ -48,9 +50,16 @@ def getProductInfo():
 
 @route.route('/allProducts')
 def allProducts():
-	products = Product.query.all()
-	products_ = list(map(lambda x : x.asDict(), products))
-	return json.dumps(products_)
+	idZone = int(request.args.get('zone', default=-1))
+	if idZone == -1:
+		products = Product.query.all()
+		products_ = list(map(lambda x : x.asDict(), products))
+		return json.dumps(products_)
+	else:
+		products = Product.query.filter_by(zone=idZone).all()
+		products_ = list(map(lambda x : x.asDict(), products))
+		return json.dumps(products_)
+		
 
 @route.route('/getRecomendations')
 def getRecomendations():
@@ -62,5 +71,32 @@ def getRecomendations():
 	if user == None:
 		return json.dumps({'error': 'No existe ningún usuario con dicho nombre'})
 
-	return json.dumps(user.asDict())
+	scores = colaborativeSystem.rateProductsForUser(user.id-1)
+
+	res = []
+	for id in scores:
+		p = Product.query.filter_by(id=id+1).first()
+		if p != None:
+			res.append(p.asDict())
+
+	return json.dumps(res)
+
+@route.route('/updateSystem')
+def updateSystem():
+	nameUser = request.args.get('name', default="")
+	if nameUser == "":
+		return json.dumps({'error': 'Nombre incorrecto o no suministrado'})
+	user = User.query.filter_by(name=nameUser).first()
+	if user == None:
+		return json.dumps({'error': 'El usuario no existe'})
+
+	idProduct = int(request.args.get('id', default=-1))
+	if idProduct == -1:
+		return json.dumps({'error': 'Id incorrecta o no suministrada'})
+
+	score = int(request.args.get('score', default=0))
+
+	colaborativeSystem.updateSystem(productId=idProduct-1,userId=user.id-1,score=score)
+
+	return json.dumps(True)
 		
