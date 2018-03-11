@@ -27,6 +27,7 @@ def addZones(db, zonesList):
 
 		map_ = Map.query.filter_by(id=zone[1]).first()
 		if map_ != None:
+			print ('Added to {0} zone {1}'.format(map_.name, z.name))
 			map_.zones.append(z)
 			db.session.add(map_)
 

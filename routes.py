@@ -33,6 +33,15 @@ def getMap():
 
 	zones_ = list(map(lambda x : x.asDict(), map_.zones))
 
+	print(map_.zones)
+	print(cells)
+	for i in range(0, len(zones_)):
+		for j in range(0, len(cells_)):
+			if zones_[i]['id'] == cells_[j]['value']:
+				zones_[i]['posX'] = cells_[j]['posX']
+				zones_[i]['posY'] = cells_[j]['posY']
+				break
+
 	return json.dumps({'map': map_.asDict(), 'cells' : cells_, 'zones' : zones_})
 
 @route.route('/getProductInfo')
